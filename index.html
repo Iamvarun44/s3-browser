@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>S3 Browser Upload</title>
+  <title>S3 Upload With IAM Credentials</title>
   <script src="https://unpkg.com/@aws-sdk/lib-storage"></script>
   <script src="https://unpkg.com/@aws-sdk/client-s3"></script>
 </head>
 <body>
-  <h2>Upload File to S3</h2>
-  <input type="file" id="fileInput">
+  <h2>Enter IAM Credentials</h2>
+  <label>Access Key ID:</label>
+  <input type="text" id="accessKey"><br>
+  <label>Secret Access Key:</label>
+  <input type="password" id="secretKey"><br><br>
+
+  <h2>Select File to Upload</h2>
+  <input type="file" id="fileInput"><br><br>
   <button onclick="uploadFile()">Upload</button>
   <p id="status"></p>
 
   <script>
     async function uploadFile() {
       const file = document.getElementById('fileInput').files[0];
-      if (!file) return alert("Choose a file");
+      const accessKeyId = document.getElementById('accessKey').value;
+      const secretAccessKey = document.getElementById('secretKey').value;
+
+      if (!file || !accessKeyId || !secretAccessKey) {
+        alert("Please provide credentials and select a file.");
+        return;
+      }
 
       const { S3Client } = window.AwsS3Client;
       const { Upload } = window.AwsS3LibStorage;
@@ -22,8 +34,8 @@
       const client = new S3Client({
         region: 'us-east-1',
         credentials: {
-          accessKeyId: 'YOUR_ACCESS_KEY',
-          secretAccessKey: 'YOUR_SECRET_KEY',
+          accessKeyId,
+          secretAccessKey
         }
       });
 
@@ -33,19 +45,21 @@
           Bucket: 'your-demo-upload-bucket',
           Key: file.name,
           Body: file,
-          ContentType: file.type,
-        },
+          ContentType: file.type
+        }
       });
 
-      upload.on("httpUploadProgress", (p) => {
-        document.getElementById('status').innerText = `Uploading: ${Math.round((p.loaded / p.total) * 100)}%`;
+      upload.on("httpUploadProgress", (progress) => {
+        const percent = Math.round((progress.loaded / progress.total) * 100);
+        document.getElementById('status').innerText = `Uploading: ${percent}%`;
       });
 
       try {
         await upload.done();
-        document.getElementById('status').innerText = "✅ Upload successful";
-      } catch (e) {
-        document.getElementById('status').innerText = "❌ Upload failed: " + e.message;
+        document.getElementById('status').innerText = "✅ Upload complete!";
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').innerText = "❌ Upload failed: " + err.message;
       }
     }
   </script>
