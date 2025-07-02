@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>S3 Browser Upload</title>
+  <script src="https://unpkg.com/@aws-sdk/lib-storage"></script>
+  <script src="https://unpkg.com/@aws-sdk/client-s3"></script>
+</head>
+<body>
+  <h2>Upload File to S3</h2>
+  <input type="file" id="fileInput">
+  <button onclick="uploadFile()">Upload</button>
+  <p id="status"></p>
+
+  <script>
+    async function uploadFile() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert("Choose a file");
+
+      const { S3Client } = window.AwsS3Client;
+      const { Upload } = window.AwsS3LibStorage;
+
+      const client = new S3Client({
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: 'YOUR_ACCESS_KEY',
+          secretAccessKey: 'YOUR_SECRET_KEY',
+        }
+      });
+
+      const upload = new Upload({
+        client,
+        params: {
+          Bucket: 'your-demo-upload-bucket',
+          Key: file.name,
+          Body: file,
+          ContentType: file.type,
+        },
+      });
+
+      upload.on("httpUploadProgress", (p) => {
+        document.getElementById('status').innerText = `Uploading: ${Math.round((p.loaded / p.total) * 100)}%`;
+      });
+
+      try {
+        await upload.done();
+        document.getElementById('status').innerText = "✅ Upload successful";
+      } catch (e) {
+        document.getElementById('status').innerText = "❌ Upload failed: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
