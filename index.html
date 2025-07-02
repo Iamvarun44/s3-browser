@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Upload File to S3 (with IAM creds)</title>
-  <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3-browser@3.470.0/dist/aws-sdk-client-s3-browser.umd.min.js"></script>
+  <title>S3 Upload with IAM Credentials</title>
+  <!-- Load AWS SDK for JS v3 (browser UMD bundles) -->
+  <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3@3.470.0/dist/aws-sdk-client-s3.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/lib-storage@3.470.0/dist/aws-sdk-lib-storage.umd.min.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
@@ -20,24 +21,24 @@
   </style>
 </head>
 <body>
-  <h2>S3 File Upload (Browser + IAM credentials)</h2>
+  <h2>Upload File to S3 (via Browser IAM credentials)</h2>
 
-  <label>AWS Access Key ID</label><br>
-  <input type="text" id="accessKey" placeholder="Enter Access Key ID"><br>
+  <label>Access Key ID</label><br>
+  <input type="text" id="accessKey"><br>
 
-  <label>AWS Secret Access Key</label><br>
-  <input type="password" id="secretKey" placeholder="Enter Secret Access Key"><br>
+  <label>Secret Access Key</label><br>
+  <input type="password" id="secretKey"><br>
 
   <label>S3 Bucket Name</label><br>
-  <input type="text" id="bucketName" placeholder="e.g., my-upload-bucket"><br>
+  <input type="text" id="bucketName"><br>
 
   <label>AWS Region</label><br>
-  <input type="text" id="region" placeholder="e.g., us-east-1"><br>
+  <input type="text" id="region" placeholder="e.g. us-east-1"><br>
 
   <label>Select File</label><br>
   <input type="file" id="fileInput"><br><br>
 
-  <button onclick="uploadFile()">Upload to S3</button>
+  <button onclick="uploadFile()">Upload</button>
 
   <div id="progressBar">
     <div id="progressBarFill">0%</div>
@@ -53,18 +54,19 @@
       const region = document.getElementById('region').value.trim();
       const file = document.getElementById('fileInput').files[0];
 
-      const status = document.getElementById('status');
+      const statusEl = document.getElementById('status');
       const progressFill = document.getElementById('progressBarFill');
+
+      statusEl.innerText = '';
       progressFill.style.width = '0%';
       progressFill.innerText = '0%';
-      status.innerText = '';
 
       if (!accessKeyId || !secretAccessKey || !bucket || !region || !file) {
         alert("Please fill in all fields and select a file.");
         return;
       }
 
-      const client = new window.AwsClientS3Browser.S3Client({
+      const s3Client = new window.AwsClientS3.S3Client({
         region: region,
         credentials: {
           accessKeyId: accessKeyId,
@@ -73,7 +75,7 @@
       });
 
       const upload = new window.AwsLibStorage.Upload({
-        client: client,
+        client: s3Client,
         params: {
           Bucket: bucket,
           Key: file.name,
@@ -86,17 +88,17 @@
         const percent = Math.round((progress.loaded / progress.total) * 100);
         progressFill.style.width = percent + '%';
         progressFill.innerText = percent + '%';
-        status.innerText = `Uploading: ${percent}%`;
+        statusEl.innerText = `Uploading: ${percent}%`;
       });
 
       try {
         await upload.done();
         progressFill.style.width = '100%';
         progressFill.innerText = '100%';
-        status.innerText = '✅ Upload successful!';
-      } catch (error) {
-        console.error("Upload failed:", error);
-        status.innerText = '❌ Upload failed: ' + error.message;
+        statusEl.innerText = '✅ Upload successful!';
+      } catch (err) {
+        console.error('Upload failed', err);
+        statusEl.innerText = '❌ Upload failed: ' + err.message;
       }
     }
   </script>
