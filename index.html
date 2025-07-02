@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Upload to S3 with IAM Credentials</title>
-  <!-- Correct UMD bundles from AWS SDK v3 -->
-  <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3@3.470.0/dist/aws-sdk-client-s3.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/lib-storage@3.470.0/dist/aws-sdk-lib-storage.umd.min.js"></script>
+  <title>S3 Upload with IAM Credentials</title>
+  <!-- Correct AWS SDK for JS UMD bundles -->
+  <script src="https://unpkg.com/@aws-sdk/client-s3@3.465.0/dist/aws-sdk-client-s3.umd.min.js"></script>
+  <script src="https://unpkg.com/@aws-sdk/lib-storage@3.465.0/dist/aws-sdk-lib-storage.umd.min.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
     input, button { padding: 8px; width: 300px; margin: 5px 0; }
@@ -67,8 +67,7 @@
       }
 
       try {
-        // ✅ Correct usage of UMD globals
-        const s3Client = new window.AwsSdkClientS3.S3Client({
+        const s3Client = new window.AwsClientS3.S3Client({
           region: region,
           credentials: {
             accessKeyId: accessKeyId,
@@ -76,7 +75,7 @@
           }
         });
 
-        const upload = new window.AwsSdkLibStorage.Upload({
+        const upload = new window.AwsLibStorage.Upload({
           client: s3Client,
           params: {
             Bucket: bucket,
