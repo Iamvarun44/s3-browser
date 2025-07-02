@@ -2,48 +2,26 @@
 <html>
 <head>
   <title>S3 Upload with IAM Credentials</title>
-  <!-- Load AWS SDK for JS v3 (browser UMD bundles) -->
   <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/client-s3@3.470.0/dist/aws-sdk-client-s3.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@aws-sdk/lib-storage@3.470.0/dist/aws-sdk-lib-storage.umd.min.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
     input, button { padding: 8px; width: 300px; margin: 5px 0; }
-    #progressBar {
-      width: 100%; height: 20px; background-color: #eee;
-      border: 1px solid #ccc; margin-top: 10px;
-    }
-    #progressBarFill {
-      height: 100%; width: 0%;
-      background-color: #4caf50; color: white;
-      text-align: center; line-height: 20px;
-    }
+    #progressBar { width: 100%; height: 20px; background: #eee; border: 1px solid #ccc; margin-top: 10px; }
+    #progressBarFill { height: 100%; width: 0%; background: #4caf50; color: white; text-align: center; line-height: 20px; }
     #status { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>Upload File to S3 (via Browser IAM credentials)</h2>
-
-  <label>Access Key ID</label><br>
-  <input type="text" id="accessKey"><br>
-
-  <label>Secret Access Key</label><br>
-  <input type="password" id="secretKey"><br>
-
-  <label>S3 Bucket Name</label><br>
-  <input type="text" id="bucketName"><br>
-
-  <label>AWS Region</label><br>
-  <input type="text" id="region" placeholder="e.g. us-east-1"><br>
-
-  <label>Select File</label><br>
-  <input type="file" id="fileInput"><br><br>
-
+  <h2>Upload File to S3</h2>
+  <label>Access Key ID:</label><br><input type="text" id="accessKey"><br>
+  <label>Secret Access Key:</label><br><input type="password" id="secretKey"><br>
+  <label>Bucket Name:</label><br><input type="text" id="bucketName"><br>
+  <label>AWS Region:</label><br><input type="text" id="region" placeholder="e.g. ap-south-1"><br>
+  <label>Select File:</label><br><input type="file" id="fileInput"><br><br>
   <button onclick="uploadFile()">Upload</button>
 
-  <div id="progressBar">
-    <div id="progressBarFill">0%</div>
-  </div>
-
+  <div id="progressBar"><div id="progressBarFill">0%</div></div>
   <p id="status"></p>
 
   <script>
@@ -53,7 +31,6 @@
       const bucket = document.getElementById('bucketName').value.trim();
       const region = document.getElementById('region').value.trim();
       const file = document.getElementById('fileInput').files[0];
-
       const statusEl = document.getElementById('status');
       const progressFill = document.getElementById('progressBarFill');
 
@@ -62,43 +39,43 @@
       progressFill.innerText = '0%';
 
       if (!accessKeyId || !secretAccessKey || !bucket || !region || !file) {
-        alert("Please fill in all fields and select a file.");
+        alert("All fields are required.");
         return;
       }
 
-      const s3Client = new window.AwsClientS3.S3Client({
-        region: region,
-        credentials: {
-          accessKeyId: accessKeyId,
-          secretAccessKey: secretAccessKey
-        }
-      });
-
-      const upload = new window.AwsLibStorage.Upload({
-        client: s3Client,
-        params: {
-          Bucket: bucket,
-          Key: file.name,
-          Body: file,
-          ContentType: file.type
-        }
-      });
-
-      upload.on("httpUploadProgress", (progress) => {
-        const percent = Math.round((progress.loaded / progress.total) * 100);
-        progressFill.style.width = percent + '%';
-        progressFill.innerText = percent + '%';
-        statusEl.innerText = `Uploading: ${percent}%`;
-      });
-
       try {
+        const s3Client = new window.AwsClientS3.S3Client({
+          region,
+          credentials: {
+            accessKeyId,
+            secretAccessKey
+          }
+        });
+
+        const upload = new window.AwsLibStorage.Upload({
+          client: s3Client,
+          params: {
+            Bucket: bucket,
+            Key: file.name,
+            Body: file,
+            ContentType: file.type
+          }
+        });
+
+        upload.on("httpUploadProgress", (progress) => {
+          const percent = Math.round((progress.loaded / progress.total) * 100);
+          progressFill.style.width = percent + '%';
+          progressFill.innerText = percent + '%';
+          statusEl.innerText = `Uploading: ${percent}%`;
+        });
+
         await upload.done();
+        statusEl.innerText = "✅ Upload successful!";
         progressFill.style.width = '100%';
         progressFill.innerText = '100%';
-        statusEl.innerText = '✅ Upload successful!';
       } catch (err) {
-        console.error('Upload failed', err);
-        statusEl.innerText = '❌ Upload failed: ' + err.message;
+        console.error("Upload error:", err);
+        statusEl.innerText = "❌ Upload failed: " + err.message;
       }
     }
   </script>
